@@ -10,9 +10,13 @@ from review_app.ui.state import esc, get_state, reset, set_state, upload_key
 MODE_REVIEW = "Review the workpaper"
 MODE_VALIDATE = "Validate the skill (label findings and score it)"
 CONFLICT_KEY = "mode_conflict"
+# Review mode is not available yet: the choice is shown but locked to validation. Flip to re-enable it.
+REVIEW_MODE_AVAILABLE = False
 
 
 def _wanted_mode() -> str:
+    if not REVIEW_MODE_AVAILABLE:
+        return "validate"
     return "validate" if st.session_state.get("mode") == MODE_VALIDATE else "review"
 
 
@@ -32,7 +36,18 @@ def _discard_mode_work() -> None:
 
 
 def mode_choice() -> None:
-    st.radio("What do you want to do?", [MODE_REVIEW, MODE_VALIDATE], key="mode")
+    if REVIEW_MODE_AVAILABLE:
+        st.radio("What do you want to do?", [MODE_REVIEW, MODE_VALIDATE], key="mode")
+        return
+    st.session_state["mode"] = MODE_VALIDATE
+    st.radio(
+        "What do you want to do?",
+        [MODE_REVIEW, MODE_VALIDATE],
+        key="mode",
+        format_func=lambda m: f"{m} (to-do)" if m == MODE_REVIEW else m,
+        disabled=True,
+        help="Reviewing the workpaper is not available yet. Only skill validation can be run for now.",
+    )
 
 
 def _confirm() -> None:

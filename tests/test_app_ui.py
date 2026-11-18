@@ -9,6 +9,7 @@ from streamlit.testing.v1 import AppTest
 
 from review_app import review_session as rs
 from review_app.models import DecisionValue as D
+from review_app.ui.upload import REVIEW_MODE_AVAILABLE
 
 APP_FILE = str(APP / "app.py")
 
@@ -204,6 +205,7 @@ def test_back_to_review_from_completion(at):
 
 VALIDATE_OPTION = "Validate the skill (label findings and score it)"
 REVIEW_OPTION = "Review the workpaper"
+needs_review_mode = pytest.mark.skipif(not REVIEW_MODE_AVAILABLE, reason="review mode is switched off (to-do)")
 
 
 def _validation_at(state):
@@ -222,6 +224,7 @@ def test_validate_mode_routes_to_label(syn_report, syn_bytes):
     assert state.validation.started_at
 
 
+@needs_review_mode
 def test_review_mode_default_unchanged(syn_report, syn_bytes):
     state = make_state(syn_report, syn_bytes, start=False)
     at = _validation_at(state)
@@ -240,6 +243,7 @@ def test_step_bar_navigates(syn_report, syn_bytes):
     assert state.page == "v_check"
 
 
+@needs_review_mode
 def test_mode_switch_with_work_needs_confirmation(syn_report, syn_bytes):
     from review_app.skill_validation import Label
 
