@@ -1,0 +1,12 @@
+# Local-only defaults. The app handles confidential workpapers: keep it on this machine.
+[server]
+address = "localhost"
+maxUploadSize = 25
+enableXsrfProtection = true
+fileWatcherType = "none"
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"

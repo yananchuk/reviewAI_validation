@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Virtual environment (uv)
+.venv/
+
+# Tool caches
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Windows download markers (WSL)
+*:Zone.Identifier
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Secrets and local data (app handles confidential workpapers)
+.env
+.env.*
+.streamlit/secrets.toml
+*.xlsx
+*.xlsm
+!tests/fixtures/**/*.xlsx

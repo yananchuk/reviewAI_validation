@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "workpaper-quality/review.schema.json#0.3",
+  "title": "<workbook>.review.json: the only output of a run, written by aggregate.py",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "workbook", "reviewed_at", "skill_version", "workbook_unchanged", "summary", "completion", "rules"],
+  "properties": {
+    "schema_version": {"const": "0.3"},
+    "run_id": {"type": "string"},
+    "workbook": {"type": "string", "description": "file name of the reviewed workpaper"},
+    "reviewed_at": {"type": "string", "description": "UTC time the results were collected"},
+    "skill_version": {"type": "string"},
+    "workbook_unchanged": {"type": "boolean", "description": "false if the workbook changed during the run"},
+    "summary": {
+      "type": "object",
+      "description": "number of rules per status",
+      "propertyNames": {"enum": ["PASS", "FINDING", "NOT_TESTED", "NOT_ASSESSED", "NOT_IN_WP", "INCOMPLETE"]},
+      "additionalProperties": {"type": "integer", "minimum": 0}
+    },
+    "completion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "rules_not_completed"],
+      "properties": {
+        "status": {"enum": ["Complete", "Incomplete"]},
+        "rules_not_completed": {"type": "array", "items": {"type": "string"}, "description": "INCOMPLETE and NOT_ASSESSED rule ids, sorted"}
+      },
+      "description": "Incomplete if any rule is INCOMPLETE or NOT_ASSESSED, or the workbook changed during the run"
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rule_id", "status", "title", "theme", "what_is_checked"],
+        "properties": {
+          "rule_id": {"type": "string"},
+          "status": {"enum": ["PASS", "FINDING", "NOT_TESTED", "NOT_ASSESSED", "NOT_IN_WP", "INCOMPLETE"]},
+          "title": {"type": "string"},
+          "theme": {"type": "string"},
+          "what_is_checked": {"type": "string"},
+          "method": {
+            "type": "object",
+            "required": ["kind", "reason"],
+            "properties": {"kind": {"type": "string"}, "reason": {"type": "string"}}
+          },
+          "places_found": {"type": "array", "items": {"type": "string"}},
+          "coverage": {"type": "string"},
+          "not_tested_parts": {"type": "array", "items": {"type": "string"}},
+          "warnings": {"type": "array", "items": {"type": "string"}},
+          "reason": {"type": "string", "description": "why the rule has no result (INCOMPLETE only)"},
+          "findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}}
+        },
+        "if": {"properties": {"status": {"const": "INCOMPLETE"}}},
+        "then": {"required": ["reason"]},
+        "else": {"required": ["method", "places_found", "coverage", "not_tested_parts", "warnings", "findings"]}
+      }
+    }
+  },
+  "$defs": {
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fingerprint", "locations", "hidden", "case", "message", "resolution", "change"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^C\\d{3,}$", "description": "C001...: numbered over all findings, rules sorted by id"},
+        "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{12}(-\\d+)?$", "description": "stable across runs: rule, case and first location; -2, -3 on collisions"},
+        "case": {"type": "string"},
+        "fallback_reason": {"type": ["string", "null"]},
+        "locations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["kind"],
+            "properties": {"kind": {"enum": ["cell", "range", "comment", "drawing", "absence", "workbook"]}}
+          },
+          "description": "where the finding is; value / anchor_value quote the workbook exactly (see rule-runner.md)"
+        },
+        "hidden": {"type": "boolean", "description": "true if the location is in a hidden sheet, row or column"},
+        "message": {"type": "string"},
+        "resolution": {"enum": ["quick_fix", "follow_up"]},
+        "change": {
+          "type": ["object", "null"],
+          "description": "proposed change for quick_fix findings: sheet, cell, before, after"
+        },
+        "possible_duplicate_of": {
+          "type": "array",
+          "items": {"type": "string", "pattern": "^C\\d{3,}$"},
+          "description": "ids of findings from other, overlapping rules that report the same location (marked, never merged)"
+        },
+        "check_problems": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "the quote or outcome re-check failed; review this finding with care"
+        }
+      }
+    }
+  }
+}
